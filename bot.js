@@ -1,178 +1,156 @@
-const TelegramBot = require("node-telegram-bot-api");
+const TelegramBot = require('node-telegram-bot-api');
 const TOKEN = "7443316446:AAEHZogMIImcurhV6eweMVXyK7_dtjjnO4c";
+const { womenSneakers } = require('./sneakersData');
+
 const bot = new TelegramBot(TOKEN, { polling: true });
+let userStates = {};
 
-const USER_SUPPORT_ID = 481356531; // ID поддержки
-let userQuestions = {};
-let userState = {};
-let questionIdCounter = 57869;
+const mainMenuKeyboard = {
+  keyboard: [
+    [{ text: "👟Каталог", web_app: { url: "https://sneakerwart.web.app/men" } }],
+    [{ text: "📲Контакты" }, { text: "💬Поддержка" }],
+    [{ text: "🎯 Подбор кроссовок" }, { text: "❓Часто задаваемые вопросы" }],
+    [{ text: "📝Оставить отзыв" }, { text: "💡Совет дня" }]
+  ],
+  resize_keyboard: true
+};
 
-const motivationalQuotes = [
-  "Только ты можешь изменить свою жизнь. Никто не сделает этого за тебя.",
-  "Не останавливайся, даже если тебе тяжело. Будь лучше, чем вчера.",
-  "Каждый день - это новый шанс стать лучше.",
-  "Не бойся делать ошибки. Учись на них и двигайся дальше.",
-  "Успех — это не случайность, это результат упорного труда.",
+const questions = [
+  {
+    question: "Для чего вам нужны кроссовки?",
+    options: [
+      { text: "Для спорта/бега", value: "sport" },
+      { text: "Для повседневной носки", value: "casual" },
+      { text: "Для особого стиля", value: "fashion" }
+    ]
+  },
+  {
+    question: "Какой бренд вы предпочитаете?",
+    options: [
+      { text: "Nike", value: "nike" },
+      { text: "Adidas", value: "adidas" },
+      { text: "Dior", value: "dior" },
+      { text: "Zara", value: "zara" }
+    ]
+  },
+  {
+    question: "Какой ценовой диапазон?",
+    options: [
+      { text: "До 10,000₽", value: "low" },
+      { text: "10,000-15,000₽", value: "medium" },
+      { text: "15,000-20,000₽", value: "high" }
+    ]
+  }
 ];
 
-// Приветствие в зависимости от времени суток
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Доброе утро!";
-  if (hour < 18) return "Добрый день!";
-  return "Добрый вечер!";
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, "Добро пожаловать в SneakerWart!", {
+    reply_markup: mainMenuKeyboard
+  });
+});
+
+bot.onText(/🎯 Подбор кроссовок/, (msg) => {
+  startQuiz(msg.chat.id);
+});
+
+function startQuiz(chatId) {
+  userStates[chatId] = { step: 0, answers: [] };
+  sendQuestion(chatId);
 }
 
-bot.onText(/\/start/, async (msg) => {
-  const userId = msg.from.id;
-  userState[userId] = null;
-
-  const startParameter = msg.text.split(" ")[1];
-  if (startParameter) {
-    console.log(`Параметр команды /start: ${startParameter}`);
-  }
-
-  const userName = msg.from.first_name;
-  const greeting = getGreeting();
-  const responseText = `
-${greeting} ${userName}!
-
-🔥 Давно хочешь найти свою идеальную пару?  
-
-Переходи в наш каталог и выбери то, что сделает твой стиль уникальным.И не забудь, у нас всегда есть что-то особенное для тебя!
-  `;
-
+function sendQuestion(chatId) {
+  const state = userStates[chatId];
+  const question = questions[state.step];
+  
   const options = {
     reply_markup: {
       keyboard: [
-        [
-          {
-            text: "👟Каталог",
-            web_app: { url: "https://sneakerwart.web.app/men" },
-          },
-          // { text: '🛒Корзина' },
-        ],
-        [{ text: "📲Контакты" }, { text: "💬Поддержка" }],
-        [
-          { text: "❓Часто задаваемые вопросы" },
-
-          { text: "📝Оставить отзыв" },
-        ],
+        question.options.map(opt => ({ text: opt.text })),
+        [{ text: "❌ Отменить опрос" }]
       ],
-      resize_keyboard: true,
-    },
-  };
-
-  await bot.sendMessage(userId, responseText, options);
-});
-
-// Кнопка Совета дня
-bot.onText(/💡Совет дня/, async (msg) => {
-  const userId = msg.from.id;
-  const randomQuote =
-    motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-  await bot.sendMessage(userId, randomQuote);
-});
-
-// Кнопка оставить отзыв
-bot.onText(/📝Оставить отзыв/, async (msg) => {
-  const userId = msg.from.id;
-  await bot.sendMessage(
-    userId,
-    "Пожалуйста, напишите ваш отзыв о товарах или услугах."
-  );
-  userState[userId] = "leaving_review";
-});
-
-// Обработка отзывов
-bot.on("message", async (msg) => {
-  const userId = msg.from.id;
-
-  if (userState[userId] === "leaving_review") {
-    const review = msg.text;
-    await bot.sendMessage(
-      USER_SUPPORT_ID,
-      `Пользователь ${msg.from.first_name} (ID: ${userId}) оставил отзыв: ${review}`
-    );
-    await bot.sendMessage(
-      userId,
-      "Ваш отзыв отправлен в поддержку. Спасибо за ваше мнение!"
-    );
-    userState[userId] = null;
-  }
-
-  // Обработка FAQ
-  if (msg.text === "❓Часто задаваемые вопросы") {
-    const faqText = `
-💬 *Часто задаваемые вопросы*:
-
-1️⃣ *Как сделать заказ?*
-
-- Для того чтобы сделать заказ, просто выберите товар в каталоге и добавьте его в корзину.
-
-2️⃣ *Какие способы оплаты доступны?*
-
-- Мы принимаем оплату через карты Visa, MasterCard и электронные кошельки.
-
-3️⃣ *Как можно вернуть товар?*
-
-- Вы можете вернуть товар в течение 14 дней, если он не был в использовании.
-
-4️⃣ *Как узнать статус своего заказа?*
-
-- Вы получите уведомление на email о статусе вашего заказа, а также сможете отслеживать его через личный кабинет.
-
-5️⃣ *Могу ли я изменить свой заказ после оформления?*
-
-- Если заказ еще не был отправлен, вы можете изменить его, обратившись в нашу службу поддержки.
-    `;
-    await bot.sendMessage(userId, faqText);
-  }
-
-  // Статистика корзины
-  if (msg.text === "📊Статистика") {
-    // Имитация статистики (например, кол-во товаров в корзине)
-    const cartItemCount = 5; // Здесь можно использовать реальную логику для подсчета товаров в корзине
-    await bot.sendMessage(
-      userId,
-      `📊 Ваша корзина содержит ${cartItemCount} товаров.`
-    );
-  }
-});
-
-bot.onText(
-  /(🛒Корзина|📲Контакты|💬Поддержка|❓Часто задаваемые вопросы)/,
-  async (msg) => {
-    const userId = msg.from.id;
-
-    if (msg.text === "🛒Корзина") {
-      await bot.sendMessage(userId, "Ваша корзина пока пуста.");
-      userState[userId] = null;
-    } else if (msg.text === "📲Контакты") {
-      await bot.sendMessage(
-        userId,
-        "Свяжитесь с нами по телефону: +77777777777"
-      );
-      userState[userId] = null;
-    } else if (msg.text === "💬Поддержка") {
-      await bot.sendMessage(
-        userId,
-        "Пожалуйста, напишите свой вопрос. Мы свяжемся с вами как можно скорее."
-      );
-
-      userQuestions[userId] = {
-        name: msg.from.first_name,
-        question: null,
-        questionId: questionIdCounter,
-      };
-      userState[userId] = "support";
-      questionIdCounter += 1;
-    } else if (msg.text === "💡Совет дня") {
-      const randomQuote =
-        motivationalQuotes[
-          Math.floor(Math.random() * motivationalQuotes.length)
-        ];
-      await bot.sendMessage(userId, randomQuote);
+      resize_keyboard: true
     }
+  };
+  
+  bot.sendMessage(chatId, `Вопрос ${state.step + 1}/${questions.length}\n\n${question.question}`, options);
+}
+
+bot.on('message', (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text;
+
+  if (!userStates[chatId]) return;
+
+  if (text === "❌ Отменить опрос") {
+    delete userStates[chatId];
+    bot.sendMessage(chatId, "Опрос отменен", { reply_markup: mainMenuKeyboard });
+    return;
   }
-);
+
+  const state = userStates[chatId];
+  const currentQuestion = questions[state.step];
+  const selectedOption = currentQuestion.options.find(opt => opt.text === text);
+
+  if (!selectedOption) {
+    bot.sendMessage(chatId, "Пожалуйста, выберите вариант из предложенных!");
+    return;
+  }
+
+  state.answers.push(selectedOption.value);
+  state.step++;
+
+  if (state.step === questions.length) {
+    showResults(chatId, state.answers);
+    delete userStates[chatId];
+  } else {
+    sendQuestion(chatId);
+  }
+});
+
+function showResults(chatId, answers) {
+  let filtered = womenSneakers.filter(sneaker => {
+    const matchesType = sneaker.type === answers[0];
+    const matchesBrand = sneaker.brand === answers[1];
+    const price = parseInt(sneaker.price.replace(/[^0-9]/g, ''));
+    
+    let matchesPrice = true;
+    switch(answers[2]) {
+      case 'low': matchesPrice = price < 10000; break;
+      case 'medium': matchesPrice = price >= 10000 && price <= 15000; break;
+      case 'high': matchesPrice = price > 15000; break;
+    }
+    
+    return matchesType && matchesBrand && matchesPrice;
+  });
+
+  if (filtered.length === 0) filtered = womenSneakers.slice(0, 3);
+
+  const resultMessage = `👟 *Мы подобрали для вас:*\n\n${filtered.map((sneaker, index) => 
+    `${index + 1}. *${sneaker.title}*\n💵 Цена: ${sneaker.price}₽\n📸 [Фото](${sneaker.img})`
+  ).join('\n\n')}`;
+
+  bot.sendMessage(chatId, resultMessage, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [[
+        { text: "🔄 Пройти заново", callback_data: "restart_quiz" },
+        { text: "📖 Главное меню", callback_data: "main_menu" }
+      ]]
+    }
+  });
+}
+
+bot.on('callback_query', (query) => {
+  const chatId = query.message.chat.id;
+  
+  if (query.data === "restart_quiz") {
+    startQuiz(chatId);
+  } else if (query.data === "main_menu") {
+    bot.sendMessage(chatId, "Выберите действие:", { reply_markup: mainMenuKeyboard });
+  }
+  
+  bot.answerCallbackQuery(query.id);
+});
+
+console.log('Бот успешно запущен!');
