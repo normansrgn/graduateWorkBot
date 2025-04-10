@@ -45,7 +45,6 @@ const mainMenuKeyboard = {
     ],
     [
       { text: `${EMOJI.QUIZ} Подбор кроссовок` },
-      { text: `${EMOJI.TIP} Совет дня` }
     ]
   ],
   resize_keyboard: true,
