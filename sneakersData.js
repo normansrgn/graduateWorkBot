@@ -1,24 +1,100 @@
- const womenSneakers = [
-    {
-      id: 16,
-      title: "Nike Air Jordan 1",
-      brand: "nike",
-      type: "fashion",
-      price: "6299",
-      img: "https://example.com/sneakers/1.jpg",
-      description: "Классические кроссовки в стиле ретро...",
-    },
-    {
-      id: 17,
-      title: "Nike Air Jordan 5",
-      brand: "nike",
-      type: "casual",
-      price: "7999",
-      img: "https://example.com/sneakers/2.jpg",
-      description: "Современный дизайн...",
-    },
-    // Остальные кроссовки с аналогичной структурой
-    // Обязательно добавьте поля brand и type для всех элементов
-  ];
+const womenSneakers = [
+  {
+    id: 1,
+    title: "Nike Dunk Low Retro",
+    brand: "nike",
+    type: "fashion",
+    price: "12,499",
+    img: "https://sneakerwart.web.app/product/1",
+  },
+  {
+    id: 2,
+    title: "Nike Air Max Plus 'Hyper Blue'",
+    brand: "nike",
+    type: "fashion",
+    price: "15,999",
+    img: "https://sneakerwart.web.app/product/2",
+  },
+  {
+    id: 3,
+    title: "Nike Air Force 1 '07 LV8",
+    brand: "nike",
+    type: "fashion",
+    price: "11,299",
+    img: "https://sneakerwart.web.app/product/3",
+  },
+  {
+    id: 4,
+    title: "Adidas Samba OG Vegan",
+    brand: "adidas",
+    type: "fashion",
+    price: "9,999",
+    img: "https://sneakerwart.web.app/product/4",
+  },
+  {
+    id: 5,
+    title: "Adidas Gazelle Indoor",
+    brand: "adidas",
+    type: "fashion",
+    price: "10,799",
+    img: "https://sneakerwart.web.app/product/5",
+  },
+  {
+    id: 6,
+    title: "Adidas NMD_R1 Primeblue",
+    brand: "adidas",
+    type: "fashion",
+    price: "14,499",
+    img: "https://sneakerwart.web.app/product/6",
+  },
+  {
+    id: 7,
+    title: "New Balance 550 'White Green'",
+    brand: "new balance",
+    type: "fashion",
+    price: "13,899",
+    img: "https://sneakerwart.web.app/product/7",
+  },
+  {
+    id: 8,
+    title: "New Balance 990v6 Made in USA",
+    brand: "new balance",
+    type: "fashion",
+    price: "22,999",
+    img: "https://sneakerwart.web.app/product/8",
+  },
+  {
+    id: 9,
+    title: "ASICS Gel-Kayano 14",
+    brand: "asics",
+    type: "fashion",
+    price: "12,999",
+    img: "https://sneakerwart.web.app/product/9",
+  },
+  {
+    id: 10,
+    title: "PUMA Mayze Stack",
+    brand: "puma",
+    type: "fashion",
+    price: "11,499",
+    img: "https://sneakerwart.web.app/product/10",
+  },
+  {
+    id: 11,
+    title: "Nike Air Max Scorpion",
+    brand: "nike",
+    type: "fashion",
+    price: "24,999",
+    img: "https://sneakerwart.web.app/product/11",
+  },
+  {
+    id: 12,
+    title: "Adidas Ozweego 2023",
+    brand: "adidas",
+    type: "fashion",
+    price: "13,999",
+    img: "https://sneakerwart.web.app/product/12",
+  },
+];
 
-  module.exports = { womenSneakers };
+module.exports = { womenSneakers };

@@ -210,48 +210,38 @@ function showResults(chatId, answers) {
   });
 
   if (filtered.length === 0) {
-    filtered = womenSneakers
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 5);
-    
-    bot.sendMessage(
-      chatId,
-      `${EMOJI.WARNING} По вашим критериям мы не нашли идеальных вариантов, но вот наши рекомендации:`,
-      { parse_mode: "Markdown" }
-    );
+    filtered = womenSneakers.sort(() => 0.5 - Math.random()).slice(0, 5);
+    bot.sendMessage(chatId, `${EMOJI.WARNING} По вашим критериям мы не нашли идеальных вариантов, но вот наши рекомендации:`, {
+      parse_mode: "Markdown"
+    });
   } else {
-    bot.sendMessage(
-      chatId,
-      `${EMOJI.STAR} *Мы нашли ${filtered.length} отличных вариантов для вас!*`,
-      { parse_mode: "Markdown" }
-    );
-  }
-
-  // Отправляем по 2 кроссовка в сообщении
-  for (let i = 0; i < filtered.length; i += 2) {
-    const chunk = filtered.slice(i, i + 2);
-    const message = chunk.map((sneaker, idx) => 
-      `*${i + idx + 1}. ${sneaker.title}*\n` +
-      `${EMOJI.MONEY} Цена: ${sneaker.price}\n` +
-      `${EMOJI.PHOTO} [Посмотреть](${sneaker.img})`
-    ).join("\n\n");
-
-    bot.sendMessage(chatId, message, {
-      parse_mode: "Markdown",
-      disable_web_page_preview: false,
-      reply_markup: i === 0 ? {
-        inline_keyboard: [
-          [
-            { text: `${EMOJI.RELOAD} Начать заново`, callback_data: "restart_quiz" },
-            { text: `${EMOJI.CATALOG} Весь каталог`, web_app: { url: "https://sneakerwart.web.app/men" } }
-          ],
-          [
-            { text: `${EMOJI.HOME} В меню`, callback_data: "main_menu" }
-          ]
-        ]
-      } : undefined
+    bot.sendMessage(chatId, `${EMOJI.STAR} *Мы нашли ${filtered.length} отличных вариантов для вас!*`, {
+      parse_mode: "Markdown"
     });
   }
+
+  // Объединяем все результаты в одно сообщение
+  const message = filtered.map((sneaker, idx) => 
+    `*${idx + 1}. ${sneaker.title}*\n` +
+    `${EMOJI.MONEY} Цена: ${sneaker.price}\n` +
+    `${EMOJI.PHOTO} [Посмотреть](${sneaker.img})`
+  ).join("\n\n");
+
+  bot.sendMessage(chatId, message, {
+    parse_mode: "Markdown",
+    disable_web_page_preview: false,
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: `${EMOJI.RELOAD} Начать заново`, callback_data: "restart_quiz" },
+          { text: `${EMOJI.CATALOG} Весь каталог`, web_app: { url: "https://sneakerwart.web.app/men" } }
+        ],
+        [
+          { text: `${EMOJI.HOME} В меню`, callback_data: "main_menu" }
+        ]
+      ]
+    }
+  });
 }
 
 // Улучшенная проверка цены
