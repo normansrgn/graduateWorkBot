@@ -1,15 +1,16 @@
+require('dotenv').config(); // Подключаем dotenv для работы с .env
+
 const TelegramBot = require("node-telegram-bot-api");
-const express = require("express");
 const { womenSneakers } = require("./sneakersData");
 
-const app = express();
-app.use(express.json());
+const TOKEN = process.env.BOT_TOKEN;
 
-const TOKEN = process.env.BOT_TOKEN; // Токен из переменной окружения
-const WEBHOOK_URL = process.env.WEBHOOK_URL || `https://${process.env.RENDER_EXTERNAL_HOSTNAME}/webhook`;
-const PORT = process.env.PORT || 8080;
+if (!TOKEN) {
+  console.error("🚨 Ошибка: BOT_TOKEN не указан в переменных окружения!");
+  process.exit(1);
+}
 
-const bot = new TelegramBot(TOKEN, { polling: false }); // Используем вебхуки
+const bot = new TelegramBot(TOKEN, { polling: true }); // Используем polling вместо вебхуков
 const USER_SUPPORT_ID = 481356531; // Ваш Telegram ID
 let userStates = {};
 
@@ -112,19 +113,6 @@ ${EMOJI.SNEAKER} У нас ты найдешь *идеальную пару* к�
 Выбери действие из меню ниже 👇
 `;
 
-// Настройка вебхука
-app.post('/webhook', (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
-
-// Установка вебхука
-bot.setWebHook(`${WEBHOOK_URL}/webhook`).then(() => {
-  console.log(`Webhook set to ${WEBHOOK_URL}/webhook`);
-}).catch(err => {
-  console.error('Error setting webhook:', err);
-});
-
 // Обработчики команд
 bot.onText(/\/start/, (msg) => {
   const firstName = msg.from.first_name;
@@ -135,7 +123,7 @@ function sendMainMenu(chatId, firstName = '') {
   bot.sendMessage(chatId, welcomeMessage(firstName), {
     reply_markup: mainMenuKeyboard,
     parse_mode: "Markdown"
-  });
+  }).catch(err => console.error('Ошибка отправки главного меню:', err.message));
 }
 
 // Подбор кроссовок
@@ -148,23 +136,23 @@ function startQuiz(chatId) {
     answers: [],
     startTime: new Date()
   };
-  
-  bot.sendMessage(chatId, 
+
+  bot.sendMessage(chatId,
     `${EMOJI.QUIZ} *Подбор идеальных кроссовок*\n\n` +
-    `Ответьте на ${questions.length} простых вопроса, и мы подберем для вас лучшие варианты!`, 
+    `Ответьте на ${questions.length} простых вопроса, и мы подберем для вас лучшие варианты!`,
     { parse_mode: "Markdown" }
-  );
-  
+  ).catch(err => console.error('Ошибка начала опроса:', err.message));
+
   sendQuestion(chatId);
 }
 
 function sendQuestion(chatId) {
   const state = userStates[chatId];
   if (!state || state.step >= questions.length) return;
-  
+
   const question = questions[state.step];
   const progress = `${state.step + 1}/${questions.length}`;
-  
+
   const keyboard = {
     keyboard: [
       ...question.options.map(opt => [{ text: `${opt.emoji || ''} ${opt.text}` }]),
@@ -173,7 +161,7 @@ function sendQuestion(chatId) {
     resize_keyboard: true,
     one_time_keyboard: true
   };
-  
+
   bot.sendMessage(
     chatId,
     `*Вопрос ${progress}*\n${question.question}`,
@@ -181,21 +169,21 @@ function sendQuestion(chatId) {
       reply_markup: keyboard,
       parse_mode: "Markdown"
     }
-  );
+  ).catch(err => console.error('Ошибка отправки вопроса:', err.message));
 }
 
 // Обработка ответов на вопросы
 function handleQuiz(chatId, msg, state) {
   const currentQuestion = questions[state.step];
-  const userAnswer = currentQuestion.options.find(opt => 
+  const userAnswer = currentQuestion.options.find(opt =>
     msg.text.includes(opt.text) || msg.text.includes(opt.emoji)
   );
 
   if (!userAnswer) {
-    return bot.sendMessage(chatId, 
+    return bot.sendMessage(chatId,
       `${EMOJI.WARNING} Пожалуйста, выберите один из предложенных вариантов.`,
       { reply_markup: { keyboard: currentQuestion.options.map(opt => [{ text: `${opt.emoji} ${opt.text}` }]) } }
-    );
+    ).catch(err => console.error('Ошибка обработки ответа:', err.message));
   }
 
   state.answers.push(userAnswer.value);
@@ -210,7 +198,7 @@ function handleQuiz(chatId, msg, state) {
       showResults(chatId, state.answers);
       delete userStates[chatId];
     }
-  });
+  }).catch(err => console.error('Ошибка после ответа:', err.message));
 }
 
 // Показ результатов
@@ -230,14 +218,14 @@ function showResults(chatId, answers) {
     filtered = womenSneakers.sort(() => 0.5 - Math.random()).slice(0, 5);
     bot.sendMessage(chatId, `${EMOJI.WARNING} По вашим критериям мы не нашли идеальных вариантов, но вот наши рекомендации:`, {
       parse_mode: "Markdown"
-    });
+    }).catch(err => console.error('Ошибка отправки рекомендаций:', err.message));
   } else {
     bot.sendMessage(chatId, `${EMOJI.STAR} *Мы нашли ${filtered.length} отличных вариантов для вас!*`, {
       parse_mode: "Markdown"
-    });
+    }).catch(err => console.error('Ошибка отправки результатов:', err.message));
   }
 
-  const message = filtered.map((sneaker, idx) => 
+  const message = filtered.map((sneaker, idx) =>
     `*${idx + 1}. ${sneaker.title}*\n` +
     `${EMOJI.MONEY} Цена: ${sneaker.price}\n` +
     `${EMOJI.PHOTO} [Посмотреть](${sneaker.img})`
@@ -257,7 +245,7 @@ function showResults(chatId, answers) {
         ]
       ]
     }
-  });
+  }).catch(err => console.error('Ошибка отправки списка кроссовок:', err.message));
 }
 
 function checkPrice(price, range) {
@@ -272,8 +260,8 @@ function checkPrice(price, range) {
 // Поддержка
 bot.onText(new RegExp(`${EMOJI.SUPPORT} Поддержка`), (msg) => {
   userStates[msg.chat.id] = { type: "support", step: "awaiting_question" };
-  
-  bot.sendMessage(msg.chat.id, 
+
+  bot.sendMessage(msg.chat.id,
     `${EMOJI.SUPPORT} *Напишите ваш вопрос*\n\n` +
     `Опишите подробно вашу проблему или вопрос, и наша поддержка ответит вам в ближайшее время.`,
     {
@@ -284,18 +272,18 @@ bot.onText(new RegExp(`${EMOJI.SUPPORT} Поддержка`), (msg) => {
       },
       parse_mode: "Markdown"
     }
-  );
+  ).catch(err => console.error('Ошибка отправки сообщения поддержки:', err.message));
 });
 
 function handleSupport(chatId, msg) {
   const question = msg.text;
-  
+
   if (question.length < 10) {
-    return bot.sendMessage(chatId, 
+    return bot.sendMessage(chatId,
       `${EMOJI.WARNING} Пожалуйста, опишите ваш вопрос более подробно (минимум 10 символов).`
-    );
+    ).catch(err => console.error('Ошибка обработки вопроса поддержки:', err.message));
   }
-  
+
   bot.sendMessage(
     USER_SUPPORT_ID,
     `🆘 *Новый вопрос от пользователя*\n\n` +
@@ -304,22 +292,22 @@ function handleSupport(chatId, msg) {
     `📝 Вопрос:\n${question}\n\n` +
     `Ответьте на это сообщение, чтобы отправить ответ пользователю.`,
     { parse_mode: "Markdown" }
-  );
-  
-  bot.sendMessage(chatId, 
+  ).catch(err => console.error('Ошибка отправки вопроса в поддержку:', err.message));
+
+  bot.sendMessage(chatId,
     `${EMOJI.CHECK} Ваш вопрос отправлен в поддержку! Мы ответим вам в ближайшее время.\n\n` +
     `${EMOJI.HEART} Спасибо, что выбрали SneakerWart!`,
     { reply_markup: mainMenuKeyboard }
-  );
-  
+  ).catch(err => console.error('Ошибка подтверждения вопроса:', err.message));
+
   delete userStates[chatId];
 }
 
 // Отзывы
 bot.onText(new RegExp(`${EMOJI.REVIEW} Отзыв`), (msg) => {
   userStates[msg.chat.id] = { type: "review", step: "awaiting_review" };
-  
-  bot.sendMessage(msg.chat.id, 
+
+  bot.sendMessage(msg.chat.id,
     `${EMOJI.REVIEW} *Поделитесь вашим мнением*\n\n` +
     `Нам очень важно ваше мнение! Напишите, что вам понравилось или что мы можем улучшить. ` +
     `Лучшие отзывы получают скидки на следующие покупки!`,
@@ -331,39 +319,39 @@ bot.onText(new RegExp(`${EMOJI.REVIEW} Отзыв`), (msg) => {
       },
       parse_mode: "Markdown"
     }
-  );
+  ).catch(err => console.error('Ошибка отправки запроса отзыва:', err.message));
 });
 
 function handleReview(chatId, msg) {
   const review = msg.text;
-  
+
   if (review.length < 15) {
-    return bot.sendMessage(chatId, 
+    return bot.sendMessage(chatId,
       `${EMOJI.WARNING} Пожалуйста, напишите более развернутый отзыв (минимум 15 символов).`
-    );
+    ).catch(err => console.error('Ошибка обработки отзыва:', err.message));
   }
-  
+
   const ratingKeyboard = {
     inline_keyboard: [
-      [{ text: "⭐", callback_data: "rate_1" }, { text: "⭐⭐", callback_data: "rate_2" }, 
-       { text: "⭐⭐⭐", callback_data: "rate_3" }, { text: "⭐⭐⭐⭐", callback_data: "rate_4" }, 
+      [{ text: "⭐", callback_data: "rate_1" }, { text: "⭐⭐", callback_data: "rate_2" },
+       { text: "⭐⭐⭐", callback_data: "rate_3" }, { text: "⭐⭐⭐⭐", callback_data: "rate_4" },
        { text: "⭐⭐⭐⭐⭐", callback_data: "rate_5" }]
     ]
   };
-  
+
   bot.sendMessage(
     USER_SUPPORT_ID,
     `${EMOJI.STAR} *Новый отзыв*\n\n` +
     `👤 От: ${msg.from.first_name} ${msg.from.last_name || ''}\n` +
     `🆔 ID: ${chatId}\n\n` +
     `📝 Отзыв:\n${review}`,
-    { 
+    {
       parse_mode: "Markdown",
-      reply_markup: ratingKeyboard 
+      reply_markup: ratingKeyboard
     }
-  );
-  
-  bot.sendMessage(chatId, 
+  ).catch(err => console.error('Ошибка отправки отзыва:', err.message));
+
+  bot.sendMessage(chatId,
     `${EMOJI.HEART} *Спасибо за ваш отзыв!*\n\n` +
     `Ваше мнение очень важно для нас и поможет стать лучше. ` +
     `В благодарность при следующем заказе используйте промокод *THANKS10* для скидки 10%!`,
@@ -371,8 +359,8 @@ function handleReview(chatId, msg) {
       reply_markup: mainMenuKeyboard,
       parse_mode: "Markdown"
     }
-  );
-  
+  ).catch(err => console.error('Ошибка подтверждения отзыва:', err.message));
+
   delete userStates[chatId];
 }
 
@@ -399,11 +387,11 @@ ${EMOJI.SUPPORT} *График работы поддержки:*
 
 Мы всегда рады помочь вам! ${EMOJI.HEART}
 `;
-  
-  bot.sendMessage(msg.chat.id, contactText, { 
+
+  bot.sendMessage(msg.chat.id, contactText, {
     parse_mode: "Markdown",
     disable_web_page_preview: true
-  });
+  }).catch(err => console.error('Ошибка отправки контактов:', err.message));
 });
 
 // FAQ
@@ -437,15 +425,15 @@ ${EMOJI.FAQ} *Часто задаваемые вопросы* ${EMOJI.FAQ}
 
 ${EMOJI.SUPPORT} *Остались вопросы?* Напишите в нашу поддержку!
 `;
-  
-  bot.sendMessage(msg.chat.id, faq, { 
+
+  bot.sendMessage(msg.chat.id, faq, {
     parse_mode: "Markdown",
     reply_markup: {
       inline_keyboard: [
         [{ text: `${EMOJI.SUPPORT} Написать в поддержку`, callback_data: "contact_support" }]
       ]
     }
-  });
+  }).catch(err => console.error('Ошибка отправки FAQ:', err.message));
 });
 
 // Советы дня
@@ -467,50 +455,50 @@ bot.onText(new RegExp(`${EMOJI.TIP} Совет дня`), (msg) => {
       "Черные кроссовки визуально уменьшают размер ноги"
     ]
   };
-  
+
   const categories = Object.keys(tips);
   const randomCategory = categories[Math.floor(Math.random() * categories.length)];
   const randomTip = tips[randomCategory][Math.floor(Math.random() * tips[randomCategory].length)];
-  
+
   let categoryEmoji = "💡";
-  switch(randomCategory) {
+  switch (randomCategory) {
     case 'care': categoryEmoji = "🧼"; break;
     case 'selection': categoryEmoji = "👟"; break;
     case 'style': categoryEmoji = "👔"; break;
   }
-  
+
   bot.sendMessage(
     msg.chat.id,
     `${categoryEmoji} *Совет дня: ${randomCategory === 'care' ? 'Уход' : randomCategory === 'selection' ? 'Выбор' : 'Стиль'}* ${categoryEmoji}\n\n` +
     `${randomTip}\n\n` +
     `#СоветДня #SneakerWart`,
     { parse_mode: "Markdown" }
-  );
+  ).catch(err => console.error('Ошибка отправки совета дня:', err.message));
 });
 
 // Обработка всех сообщений
 bot.on("message", (msg) => {
   if (!msg.text) return;
-  
+
   const chatId = msg.chat.id;
   const text = msg.text;
   const state = userStates[chatId];
-  
+
   if (text.includes("Отменить") || text.includes(EMOJI.CANCEL)) {
     delete userStates[chatId];
     return sendMainMenu(chatId);
   }
-  
+
   if (!state) return;
-  
-  switch(state.type) {
-    case "quiz": 
+
+  switch (state.type) {
+    case "quiz":
       handleQuiz(chatId, msg, state);
       break;
-    case "support": 
+    case "support":
       handleSupport(chatId, msg);
       break;
-    case "review": 
+    case "review":
       handleReview(chatId, msg);
       break;
   }
@@ -520,10 +508,10 @@ bot.on("message", (msg) => {
 bot.on("callback_query", (query) => {
   const chatId = query.message.chat.id;
   const data = query.data;
-  
-  bot.answerCallbackQuery(query.id);
-  
-  switch(data) {
+
+  bot.answerCallbackQuery(query.id).catch(err => console.error('Ошибка ответа на callback:', err.message));
+
+  switch (data) {
     case "restart_quiz":
       startQuiz(chatId);
       break;
@@ -539,13 +527,15 @@ bot.on("callback_query", (query) => {
             [{ text: `${EMOJI.MAIL} Написать на email`, callback_data: "show_email" }]
           ]
         }
-      });
+      }).catch(err => console.error('Ошибка отправки контактов поддержки:', err.message));
       break;
     case "show_phone":
-      bot.sendMessage(chatId, `☎️ Наш телефон для связи: +7 (999) 123-45-67`);
+      bot.sendMessage(chatId, `☎️ Наш телефон для связи: +7 (999) 123-45-67`)
+        .catch(err => console.error('Ошибка отправки телефона:', err.message));
       break;
     case "show_email":
-      bot.sendMessage(chatId, `📩 Наш email: support@sneakerwart.ru`);
+      bot.sendMessage(chatId, `📩 Наш email: support@sneakerwart.ru`)
+        .catch(err => console.error('Ошибка отправки email:', err.message));
       break;
     default:
       if (data.startsWith("rate_")) {
@@ -554,7 +544,7 @@ bot.on("callback_query", (query) => {
           USER_SUPPORT_ID,
           `Пользователь оценил отзыв на ${rating} звезд`,
           { reply_to_message_id: query.message.message_id }
-        );
+        ).catch(err => console.error('Ошибка отправки рейтинга:', err.message));
       }
   }
 });
@@ -564,22 +554,25 @@ bot.on("message", (msg) => {
   if (msg.reply_to_message && msg.chat.id === USER_SUPPORT_ID) {
     const replyTo = msg.reply_to_message.text || '';
     const chatIdMatch = replyTo.match(/🆔 ID: (\d+)/);
-    
+
     if (chatIdMatch) {
       const targetChatId = chatIdMatch[1];
       const supportAnswer = msg.text;
-      
+
       bot.sendMessage(
         targetChatId,
         `${EMOJI.SUPPORT} *Ответ от поддержки:*\n\n${supportAnswer}\n\n` +
         `${EMOJI.HEART} Спасибо, что выбрали SneakerWart!`,
         { parse_mode: "Markdown" }
-      );
+      ).catch(err => console.error('Ошибка отправки ответа поддержки:', err.message));
     }
   }
 });
 
-// Запуск сервера
-app.listen(PORT, () => {
-  console.log(`${EMOJI.SNEAKER} Бот запущен на порту ${PORT}! ${EMOJI.SNEAKER}`);
+// Обработка ошибок
+bot.on('polling_error', (error) => {
+  console.error('Ошибка polling:', error.message);
 });
+
+// Сообщение о запуске
+console.log(`${EMOJI.SNEAKER} Бот запущен в режиме polling! ${EMOJI.SNEAKER}`);
