@@ -381,25 +381,25 @@ function handleReview(chatId, msg) {
 // Контакты
 bot.onText(new RegExp(`${EMOJI.CONTACTS} Контакты`), (msg) => {
   const contactText = `
-${EMOJI.PHONE} *Contacts SneakerWart* ${EMOJI.PHONE}
+${EMOJI.PHONE} *Контакты SneakerWart* ${EMOJI.PHONE}
 
-${EMOJI.SNEAKER} *Shop address:*
-Moscow, Primernaya st., 123, "Fashion" mall, 2nd floor
+${EMOJI.SNEAKER} *Адрес магазина:*
+г. Москва, ул. Примерная, д. 123, ТЦ "Модный", 2 этаж
 
-${EMOJI.PHONE} *Contact phone:*
+${EMOJI.PHONE} *Телефон для связи:*
 +7 (999) 123-45-67 (WhatsApp, Telegram)
 
-${EMOJI.MAIL} *Email:*
+${EMOJI.MAIL} *Электронная почта:*
 support@sneakerwart.ru
 
-${EMOJI.GLOBE} *Our website:*
+${EMOJI.GLOBE} *Наш сайт:*
 [sneakerwart.web.app](https://sneakerwart.web.app)
 
-${EMOJI.SUPPORT} *Support hours:*
-Mon-Fri: 9:00 - 21:00
-Sat-Sun: 10:00 - 18:00
+${EMOJI.SUPPORT} *График работы поддержки:*
+Пн-Пт: 9:00 - 21:00
+Сб-Вс: 10:00 - 18:00
 
-We're always happy to help! ${EMOJI.HEART}
+Мы всегда рады помочь вам! ${EMOJI.HEART}
 `;
 
   bot.sendMessage(msg.chat.id, contactText, {
@@ -411,40 +411,40 @@ We're always happy to help! ${EMOJI.HEART}
 // FAQ
 bot.onText(new RegExp(`${EMOJI.FAQ} Вопросы`), (msg) => {
   const faq = `
-${EMOJI.FAQ} *Frequently Asked Questions* ${EMOJI.FAQ}
+${EMOJI.FAQ} *Часто задаваемые вопросы* ${EMOJI.FAQ}
 
-1️⃣ *How to place an order?*
-- Choose a product in the catalog
-- Add to cart
-- Enter delivery details
-- Pay using your preferred method
+1️⃣ *Как сделать заказ?*
+- Выберите товар в каталоге
+- Добавьте в корзину
+- Укажите данные для доставки
+- Оплатите удобным способом
 
-2️⃣ *Payment methods:*
-💳 Bank cards (Visa, Mastercard, MIR)
+2️⃣ *Способы оплаты:*
+💳 Банковские карты (Visa, Mastercard, МИР)
 📱 Apple Pay / Google Pay
-🤝 Cash on delivery
+🤝 Наложенный платеж (при получении)
 
-3️⃣ *Delivery:*
-🚗 Moscow - 1-2 days (299₽ or free for orders over 5000₽)
-📦 Russia - 2-7 days (from 399₽)
+3️⃣ *Доставка:*
+🚗 По Москве - 1-2 дня (299₽ или бесплатно от 5000₽)
+📦 По России - 2-7 дней (от 399₽)
 
-4️⃣ *Returns and exchanges:*
-🔄 Possible within 14 days of receipt
-📦 Item must be in original condition
-📝 Receipt or order number required
+4️⃣ *Возврат и обмен:*
+🔄 Возможен в течение 14 дней с момента получения
+📦 Товар должен быть в оригинальном состоянии
+📝 Необходим чек или номер заказа
 
-5️⃣ *How to track an order?*
-📱 We'll send a tracking number after shipping
-🔍 Track it on the courier's website
+5️⃣ *Как отследить заказ?*
+📱 После отправки мы пришлем трек-номер
+🔍 Отслеживайте на сайте транспортной компании
 
-${EMOJI.SUPPORT} *Have more questions?* Contact our support!
+${EMOJI.SUPPORT} *Остались вопросы?* Напишите в нашу поддержку!
 `;
 
   bot.sendMessage(msg.chat.id, faq, {
     parse_mode: "Markdown",
     reply_markup: {
       inline_keyboard: [
-        [{ text: `${EMOJI.SUPPORT} Contact support`, callback_data: "contact_support" }]
+        [{ text: `${EMOJI.SUPPORT} Написать в поддержку`, callback_data: "contact_support" }]
       ]
     }
   }).catch(err => console.error('Ошибка отправки FAQ:', err.message));
@@ -454,19 +454,19 @@ ${EMOJI.SUPPORT} *Have more questions?* Contact our support!
 bot.onText(new RegExp(`${EMOJI.TIP} Совет дня`), (msg) => {
   const tips = {
     care: [
-      "Use a mix of baking soda and hydrogen peroxide to clean white sneakers",
-      "Avoid drying sneakers on a radiator - it can deform the material",
-      "Use water-repellent sprays to protect from moisture and dirt"
+      "Для чистки белых кроссовок используйте смесь пищевой соды и перекиси водорода",
+      "Не сушите кроссовки на батарее - это может деформировать материал",
+      "Используйте водоотталкивающие спреи для защиты от влаги и грязи"
     ],
     selection: [
-      "There should be about 5 mm of free space between the sneaker toe and your toes",
-      "Choose sneakers half a size larger for running",
-      "Gym sneakers should have good lateral support"
+      "Между носком кроссовка и пальцами ноги должно быть около 5 мм свободного пространства",
+      "Для бега выбирайте кроссовки на полразмера больше обычного",
+      "Кроссовки для зала должны иметь хорошую боковую поддержку"
     ],
     style: [
-      "White sneakers are versatile and match any style",
-      "Match sneaker color with accessories (belt, watch, bag)",
-      "Black sneakers visually reduce foot size"
+      "Белые кроссовки универсальны и подходят к любому стилю",
+      "Сочетайте цвет кроссовок с аксессуарами (ремень, часы, сумка)",
+      "Черные кроссовки визуально уменьшают размер ноги"
     ]
   };
 
@@ -483,9 +483,9 @@ bot.onText(new RegExp(`${EMOJI.TIP} Совет дня`), (msg) => {
 
   bot.sendMessage(
     msg.chat.id,
-    `${categoryEmoji} *Tip of the day: ${randomCategory === 'care' ? 'Care' : randomCategory === 'selection' ? 'Selection' : 'Style'}* ${categoryEmoji}\n\n` +
+    `${categoryEmoji} *Совет дня: ${randomCategory === 'care' ? 'Уход' : randomCategory === 'selection' ? 'Выбор' : 'Стиль'}* ${categoryEmoji}\n\n` +
     `${randomTip}\n\n` +
-    `#TipOfTheDay #SneakerWart`,
+    `#СоветДня #SneakerWart`,
     { parse_mode: "Markdown" }
   ).catch(err => console.error('Ошибка отправки совета дня:', err.message));
 });
@@ -533,22 +533,22 @@ bot.on("callback_query", (query) => {
       sendMainMenu(chatId);
       break;
     case "contact_support":
-      bot.sendMessage(chatId, "Choose a contact method:", {
+      bot.sendMessage(chatId, "Выберите способ связи:", {
         reply_markup: {
           inline_keyboard: [
-            [{ text: `${EMOJI.SUPPORT} Write to Telegram`, url: "https://t.me/sneakerwart_support" }],
-            [{ text: `${EMOJI.PHONE} Call`, callback_data: "show_phone" }],
-            [{ text: `${EMOJI.MAIL} Email us`, callback_data: "show_email" }]
+            [{ text: `${EMOJI.SUPPORT} Написать в Telegram`, url: "https://t.me/sneakerwart_support" }],
+            [{ text: `${EMOJI.PHONE} Позвонить`, callback_data: "show_phone" }],
+            [{ text: `${EMOJI.MAIL} Написать на email`, callback_data: "show_email" }]
           ]
         }
       }).catch(err => console.error('Ошибка отправки контактов поддержки:', err.message));
       break;
     case "show_phone":
-      bot.sendMessage(chatId, `☎️ Our contact phone: +7 (999) 123-45-67`)
+      bot.sendMessage(chatId, `☎️ Наш телефон для связи: +7 (999) 123-45-67`)
         .catch(err => console.error('Ошибка отправки телефона:', err.message));
       break;
     case "show_email":
-      bot.sendMessage(chatId, `📩 Our email: support@sneakerwart.ru`)
+      bot.sendMessage(chatId, `📩 Наш email: support@sneakerwart.ru`)
         .catch(err => console.error('Ошибка отправки email:', err.message));
       break;
     default:
@@ -556,7 +556,7 @@ bot.on("callback_query", (query) => {
         const rating = data.split("_")[1];
         bot.sendMessage(
           USER_SUPPORT_ID,
-          `User rated the review with ${rating} stars`,
+          `Пользователь оценил отзыв на ${rating} звезд`,
           { reply_to_message_id: query.message.message_id }
         ).catch(err => console.error('Ошибка отправки рейтинга:', err.message));
       }
@@ -575,22 +575,37 @@ bot.on("message", (msg) => {
 
       bot.sendMessage(
         targetChatId,
-        `${EMOJI.SUPPORT} *Response from support:*\n\n${supportAnswer}\n\n` +
-        `${EMOJI.HEART} Thank you for choosing SneakerWart!`,
+        `${EMOJI.SUPPORT} *Ответ от поддержки:*\n\n${supportAnswer}\n\n` +
+        `${EMOJI.HEART} Спасибо, что выбрали SneakerWart!`,
         { parse_mode: "Markdown" }
-      ).catch(err => console.error('Ошибка отправки ответа поддержки:', err.message));
+      ).then(() => {
+        // Уведомление в чат поддержки об успешной отправке
+        bot.sendMessage(
+          USER_SUPPORT_ID,
+          `${EMOJI.CHECK} Ваш ответ успешно доставлен пользователю (ID: ${targetChatId})`,
+          { parse_mode: "Markdown" }
+        ).catch(err => console.error('Ошибка отправки уведомления в поддержку:', err.message));
+      }).catch(err => {
+        console.error('Ошибка отправки ответа поддержки:', err.message);
+        // Уведомление в чат поддержки об ошибке
+        bot.sendMessage(
+          USER_SUPPORT_ID,
+          `${EMOJI.WARNING} Не удалось доставить ответ пользователю (ID: ${targetChatId}). Ошибка: ${err.message}`,
+          { parse_mode: "Markdown" }
+        ).catch(err => console.error('Ошибка отправки ошибки в поддержку:', err.message));
+      });
     }
   }
 });
 
 // Обработка ошибок
 bot.on('polling_error', (error) => {
-  console.error('Polling error:', error.message);
+  console.error('Ошибка polling:', error.message);
   if (error.message.includes('409')) {
-    console.error('🚨 Polling conflict detected! Exiting to avoid duplication.');
+    console.error('🚨 Обнаружен конфликт polling! Завершаю работу, чтобы избежать дублирования.');
     process.exit(1);
   }
 });
 
 // Сообщение о запуске
-console.log(`${EMOJI.SNEAKER} Bot started in polling mode! ${EMOJI.SNEAKER}`);
+console.log(`${EMOJI.SNEAKER} Бот запущен в режиме polling! ${EMOJI.SNEAKER}`);
