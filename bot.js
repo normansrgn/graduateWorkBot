@@ -1,5 +1,4 @@
-require('dotenv').config(); // Подключаем dotenv для работы с .env
-
+require('dotenv').config();
 const TelegramBot = require("node-telegram-bot-api");
 const { womenSneakers } = require("./sneakersData");
 
@@ -10,8 +9,8 @@ if (!TOKEN) {
   process.exit(1);
 }
 
-const bot = new TelegramBot(TOKEN, { polling: true }); // Используем polling вместо вебхуков
-const USER_SUPPORT_ID = 481356531; // Ваш Telegram ID
+const bot = new TelegramBot(TOKEN, { polling: true });
+const USER_SUPPORT_ID = 481356531;
 let userStates = {};
 
 // Эмодзи для удобства
@@ -572,6 +571,10 @@ bot.on("message", (msg) => {
 // Обработка ошибок
 bot.on('polling_error', (error) => {
   console.error('Ошибка polling:', error.message);
+  if (error.message.includes('409')) {
+    console.error('🚨 Обнаружен конфликт polling! Завершаю работу, чтобы избежать дублирования.');
+    process.exit(1);
+  }
 });
 
 // Сообщение о запуске
