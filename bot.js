@@ -1,8 +1,15 @@
 const TelegramBot = require("node-telegram-bot-api");
-const TOKEN = "7443316446:AAEHZogMIImcurhV6eweMVXyK7_dtjjnO4c";
+const express = require("express");
 const { womenSneakers } = require("./sneakersData");
 
-const bot = new TelegramBot(TOKEN, { polling: true });
+const app = express();
+app.use(express.json());
+
+const TOKEN = process.env.BOT_TOKEN; // Токен из переменной окружения
+const WEBHOOK_URL = process.env.WEBHOOK_URL || `https://${process.env.RENDER_EXTERNAL_HOSTNAME}/webhook`;
+const PORT = process.env.PORT || 8080;
+
+const bot = new TelegramBot(TOKEN, { polling: false }); // Используем вебхуки
 const USER_SUPPORT_ID = 481356531; // Ваш Telegram ID
 let userStates = {};
 
@@ -31,7 +38,7 @@ const EMOJI = {
   WARNING: "⚠️"
 };
 
-// Главное меню с улучшенным дизайном
+// Главное меню
 const mainMenuKeyboard = {
   keyboard: [
     [{ text: `${EMOJI.CATALOG} Каталог`, web_app: { url: "https://sneakerwart.web.app/men" } }],
@@ -43,15 +50,13 @@ const mainMenuKeyboard = {
       { text: `${EMOJI.REVIEW} Отзыв` },
       { text: `${EMOJI.FAQ} Вопросы` }
     ],
-    [
-      { text: `${EMOJI.QUIZ} Подбор кроссовок` },
-    ]
+    [{ text: `${EMOJI.QUIZ} Подбор кроссовок` }]
   ],
   resize_keyboard: true,
   one_time_keyboard: false
 };
 
-// Вопросы опроса с более детальными вариантами
+// Вопросы для опроса
 const questions = [
   {
     question: "Для чего вам нужны кроссовки?",
@@ -92,7 +97,7 @@ const questions = [
   }
 ];
 
-// Приветственное сообщение с форматированием
+// Приветственное сообщение
 const welcomeMessage = (firstName) => `
 ✨ *Добро пожаловать в SneakerWart, ${firstName || 'друг'}!* ✨
 
@@ -107,6 +112,19 @@ ${EMOJI.SNEAKER} У нас ты найдешь *идеальную пару* к�
 Выбери действие из меню ниже 👇
 `;
 
+// Настройка вебхука
+app.post('/webhook', (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
+
+// Установка вебхука
+bot.setWebHook(`${WEBHOOK_URL}/webhook`).then(() => {
+  console.log(`Webhook set to ${WEBHOOK_URL}/webhook`);
+}).catch(err => {
+  console.error('Error setting webhook:', err);
+});
+
 // Обработчики команд
 bot.onText(/\/start/, (msg) => {
   const firstName = msg.from.first_name;
@@ -120,7 +138,7 @@ function sendMainMenu(chatId, firstName = '') {
   });
 }
 
-// Подбор кроссовок - улучшенный процесс
+// Подбор кроссовок
 bot.onText(new RegExp(`${EMOJI.QUIZ} Подбор кроссовок`), (msg) => startQuiz(msg.chat.id));
 
 function startQuiz(chatId) {
@@ -183,7 +201,6 @@ function handleQuiz(chatId, msg, state) {
   state.answers.push(userAnswer.value);
   state.step++;
 
-  // Подтверждение выбора
   bot.sendMessage(chatId, `${EMOJI.CHECK} Выбрано: ${userAnswer.text}`, {
     reply_markup: { remove_keyboard: true }
   }).then(() => {
@@ -196,7 +213,7 @@ function handleQuiz(chatId, msg, state) {
   });
 }
 
-// Улучшенный показ результатов
+// Показ результатов
 function showResults(chatId, answers) {
   let filtered = womenSneakers.filter(sneaker => {
     const price = parseInt(sneaker.price.replace(/\D/g, ""));
@@ -220,7 +237,6 @@ function showResults(chatId, answers) {
     });
   }
 
-  // Объединяем все результаты в одно сообщение
   const message = filtered.map((sneaker, idx) => 
     `*${idx + 1}. ${sneaker.title}*\n` +
     `${EMOJI.MONEY} Цена: ${sneaker.price}\n` +
@@ -244,7 +260,6 @@ function showResults(chatId, answers) {
   });
 }
 
-// Улучшенная проверка цены
 function checkPrice(price, range) {
   switch (range) {
     case 'low': return price < 10000;
@@ -254,7 +269,7 @@ function checkPrice(price, range) {
   }
 }
 
-// Поддержка с подтверждением
+// Поддержка
 bot.onText(new RegExp(`${EMOJI.SUPPORT} Поддержка`), (msg) => {
   userStates[msg.chat.id] = { type: "support", step: "awaiting_question" };
   
@@ -272,18 +287,15 @@ bot.onText(new RegExp(`${EMOJI.SUPPORT} Поддержка`), (msg) => {
   );
 });
 
-// Обработка вопроса в поддержку
 function handleSupport(chatId, msg) {
   const question = msg.text;
   
-  // Проверка длины вопроса
   if (question.length < 10) {
     return bot.sendMessage(chatId, 
       `${EMOJI.WARNING} Пожалуйста, опишите ваш вопрос более подробно (минимум 10 символов).`
     );
   }
   
-  // Отправка вопроса в поддержку
   bot.sendMessage(
     USER_SUPPORT_ID,
     `🆘 *Новый вопрос от пользователя*\n\n` +
@@ -294,7 +306,6 @@ function handleSupport(chatId, msg) {
     { parse_mode: "Markdown" }
   );
   
-  // Подтверждение пользователю
   bot.sendMessage(chatId, 
     `${EMOJI.CHECK} Ваш вопрос отправлен в поддержку! Мы ответим вам в ближайшее время.\n\n` +
     `${EMOJI.HEART} Спасибо, что выбрали SneakerWart!`,
@@ -304,7 +315,7 @@ function handleSupport(chatId, msg) {
   delete userStates[chatId];
 }
 
-// Улучшенные отзывы
+// Отзывы
 bot.onText(new RegExp(`${EMOJI.REVIEW} Отзыв`), (msg) => {
   userStates[msg.chat.id] = { type: "review", step: "awaiting_review" };
   
@@ -323,7 +334,6 @@ bot.onText(new RegExp(`${EMOJI.REVIEW} Отзыв`), (msg) => {
   );
 });
 
-// Обработка отзыва
 function handleReview(chatId, msg) {
   const review = msg.text;
   
@@ -333,7 +343,6 @@ function handleReview(chatId, msg) {
     );
   }
   
-  // Отправка отзыва
   const ratingKeyboard = {
     inline_keyboard: [
       [{ text: "⭐", callback_data: "rate_1" }, { text: "⭐⭐", callback_data: "rate_2" }, 
@@ -354,7 +363,6 @@ function handleReview(chatId, msg) {
     }
   );
   
-  // Благодарность пользователю
   bot.sendMessage(chatId, 
     `${EMOJI.HEART} *Спасибо за ваш отзыв!*\n\n` +
     `Ваше мнение очень важно для нас и поможет стать лучше. ` +
@@ -368,7 +376,7 @@ function handleReview(chatId, msg) {
   delete userStates[chatId];
 }
 
-// Улучшенные контакты
+// Контакты
 bot.onText(new RegExp(`${EMOJI.CONTACTS} Контакты`), (msg) => {
   const contactText = `
 ${EMOJI.PHONE} *Контакты SneakerWart* ${EMOJI.PHONE}
@@ -398,7 +406,7 @@ ${EMOJI.SUPPORT} *График работы поддержки:*
   });
 });
 
-// Улучшенные FAQ
+// FAQ
 bot.onText(new RegExp(`${EMOJI.FAQ} Вопросы`), (msg) => {
   const faq = `
 ${EMOJI.FAQ} *Часто задаваемые вопросы* ${EMOJI.FAQ}
@@ -440,7 +448,7 @@ ${EMOJI.SUPPORT} *Остались вопросы?* Напишите в нашу
   });
 });
 
-// Советы дня с разными категориями
+// Советы дня
 bot.onText(new RegExp(`${EMOJI.TIP} Совет дня`), (msg) => {
   const tips = {
     care: [
@@ -488,7 +496,6 @@ bot.on("message", (msg) => {
   const text = msg.text;
   const state = userStates[chatId];
   
-  // Отмена любых действий
   if (text.includes("Отменить") || text.includes(EMOJI.CANCEL)) {
     delete userStates[chatId];
     return sendMainMenu(chatId);
@@ -496,7 +503,6 @@ bot.on("message", (msg) => {
   
   if (!state) return;
   
-  // Обработка состояний
   switch(state.type) {
     case "quiz": 
       handleQuiz(chatId, msg, state);
@@ -553,7 +559,7 @@ bot.on("callback_query", (query) => {
   }
 });
 
-// Ответ от поддержки пользователю
+// Ответ от поддержки
 bot.on("message", (msg) => {
   if (msg.reply_to_message && msg.chat.id === USER_SUPPORT_ID) {
     const replyTo = msg.reply_to_message.text || '';
@@ -573,4 +579,7 @@ bot.on("message", (msg) => {
   }
 });
 
-console.log(`${EMOJI.SNEAKER} Бот запущен и работает! ${EMOJI.SNEAKER}`);
+// Запуск сервера
+app.listen(PORT, () => {
+  console.log(`${EMOJI.SNEAKER} Бот запущен на порту ${PORT}! ${EMOJI.SNEAKER}`);
+});

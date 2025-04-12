@@ -3,11 +3,14 @@
     "version": "1.0.0",
     "main": "bot.js",
     "scripts": {
-      "start": "node index.js",
-      "build": "echo 'No build required' || true" // если сборка не нужна
+      "start": "node bot.js",
+      "build": "echo No build required"
     },
     "dependencies": {
-      "node-telegram-bot-api": "^0.66.0",
-      "express": "^4.21.0" // если используете вебхуки
+      "express": "^4.21.0",
+      "node-telegram-bot-api": "^0.66.0"
+    },
+    "engines": {
+      "node": "18.x"
     }
   }
