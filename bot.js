@@ -1,6 +1,6 @@
 require('dotenv').config();
 const TelegramBot = require("node-telegram-bot-api");
-const express = require('express'); // Добавляем Express
+const express = require('express');
 const { womenSneakers } = require("./sneakersData");
 
 const TOKEN = process.env.BOT_TOKEN;
@@ -17,9 +17,21 @@ let userStates = {};
 // Создаем Express-приложение
 const app = express();
 
-// Добавляем эндпоинт для пинга
+// Middleware для логирования всех запросов
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] Запрос: ${req.method} ${req.url}`);
+  next();
+});
+
+// Улучшенный эндпоинт для пинга
 app.get('/health', (req, res) => {
-  res.status(200).send('Bot is alive!');
+  const healthStatus = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    botPolling: bot.isPolling() ? 'active' : 'inactive',
+    uptime: process.uptime(),
+  };
+  res.status(200).json(healthStatus);
 });
 
 // Запускаем сервер
